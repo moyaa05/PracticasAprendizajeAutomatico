@@ -26,6 +26,9 @@ ENV/
 Original/
 Estandarizado/
 Normalizado/
+Modelos/
+Predicciones/
+Resultados/
 
 # Por si acaso generamos csv fuera de esas carpetas en algún momento:
  *.csv
