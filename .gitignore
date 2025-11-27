@@ -1,0 +1,51 @@
+# --- Python y Temporales ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Entornos Virtuales (¡Muy Importante!) ---
+# Nunca se sube la carpeta del entorno, cada compañero debe crear la suya
+.venv/
+venv/
+env/
+ENV/
+
+# --- Jupyter Notebooks ---
+# Ignora los archivos de autoguardado que ensucian el historial
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# --- IDEs y Editores (Configuraciones locales de cada usuario) ---
+.vscode/
+.idea/
+*.swp
+
+# --- DATOS GENERADOS (Práctica Anterior) ---
+# Como tu código "setup.ipynb" genera estos datos, no hace falta subirlos.
+# Si un compañero quiere los datos, solo tiene que ejecutar el script.
+Original/
+Estandarizado/
+Normalizado/
+
+# Por si acaso generamos csv fuera de esas carpetas en algún momento:
+ *.csv
+
+# --- MODELOS ENTRENADOS (Práctica Actual) ---
+# Los modelos .pkl son binarios y pesan. Se generan con "train.ipynb".
+models/
+*.pkl
+
+# --- Archivos de Sistema (Basura de Mac/Windows) ---
+.DS_Store
+Thumbs.db
+
+
+#--- ENTREGAS ---
+PR1.zip
+PR2.zip
+PR3.zip
+
+
+
+#ENREOS QUE QUERÁIS TENER CADA UNO:
+venvYEsoMoya.md
