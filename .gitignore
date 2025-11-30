@@ -43,9 +43,14 @@ Thumbs.db
 #--- ENTREGAS ---
 PR1.zip
 PR2.zip
-PR3.zip
-
+PR3Entrega.zip
+PR3Entrega/
 
 
 #ENREOS QUE QUERÁIS TENER CADA UNO:
 venvYEsoMoya.md
+Resultados/
+Predicciones/
+Modelos/
+*.mp4
+*.webm

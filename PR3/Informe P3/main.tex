@@ -1,0 +1,227 @@
+\documentclass{llncs}
+
+
+%load needed packages
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+
+\begin{document}
+
+\title{Informe Práctica 3: Algoritmos supervisados y métodos Ensemble}
+
+\author{Mario Polaino, Antonio Moya, Leon Skalczynski, Fernando García}
+\institute{\email{mariopolaino@uma.es, amoyam05@uma.es, leonskal@uma.es, nano\_2005@uma.es} \\
+3º Software. Universidad de Málaga.}
+
+\maketitle 
+
+\vspace{1cm}
+
+% ----------------------------------------------------------------------
+\section{Introducción}
+% ----------------------------------------------------------------------
+
+En esta práctica trabajamos con distintos algoritmos de clasificación supervisada y con la construcción posterior de métodos Ensemble para mejorar su rendimiento. Los conjuntos de datos utilizados provienen de la práctica anterior, en la cual se realizaron todas las tareas de preprocesado: estandarización, normalización, reducción mediante PCA y, de forma especialmente relevante, la generación de los cinco pliegues correspondientes a la validación cruzada.
+
+\noindent
+De este modo, en lugar de construir los pliegues en esta práctica, hacemos uso directo de dichos conjuntos de entrenamiento y prueba ya preparados. A partir de ellos, entrenamos distintos clasificadores para cada combinación de dataset y fold, evaluamos su comportamiento individual y, finalmente, estudiamos cómo la combinación de modelos mediante técnicas Ensemble (votación, media y mediana) puede mejorar la estabilidad y el rendimiento global del sistema.
+
+% ----------------------------------------------------------------------
+\section{Entrenamiento de modelos (train.ipynb)}
+% ----------------------------------------------------------------------
+
+El archivo \texttt{train.ipynb} contiene el proceso de entrenamiento de los clasificadores utilizados en la práctica. Para facilitar su comprensión, organizamos su funcionamiento en varias etapas, siguiendo la estructura lógica del notebook.
+
+\subsection{Definición de modelos supervisados}
+
+En una primera celda se definen los cuatro métodos de clasificación que se emplearán a lo largo de la práctica. Cada uno se inicializa con una configuración concreta:
+
+\begin{itemize}
+    \item \textbf{KNN}: implementado mediante \texttt{KNeighborsClassifier}, usando $k=3$ vecinos.
+    \item \textbf{SVM}: modelo \texttt{SVC} con la opción \texttt{probability=True} activada.
+    \item \textbf{Naive Bayes}: usando \texttt{GaussianNB}.
+    \item \textbf{Random Forest}: compuesto por 100 árboles y semilla fija para garantizar reproducibilidad.
+\end{itemize}
+
+\subsection{Estructura de carpetas y datasets}
+
+Se define un diccionario que relaciona cada variante del dataset con su ubicación física y sufijo de archivo. Esto permite reutilizar el mismo bloque de código para cargar cualquiera de las nueve versiones del conjunto de datos generadas previamente.
+
+\noindent
+Cada combinación \texttt{(dataset, fold)} corresponde a un archivo CSV de entrenamiento de la forma:
+
+\begin{center}
+\texttt{training\{fold\}\{suffix\}.csv}
+\end{center}
+
+\subsection{Función de entrenamiento por modelo y fold}
+
+El núcleo del archivo es la función \texttt{train\_and\_save\_model()}, responsable de:
+
+\begin{enumerate}
+    \item Localizar el archivo de entrenamiento correspondiente.
+    \item Cargar los datos separando características y etiquetas.
+    \item Seleccionar el modelo adecuado según el método indicado.
+    \item Entrenar mediante \texttt{fit}.
+    \item Guardar el modelo entrenado en formato \texttt{.pkl}, identificado por fold, dataset y método.
+\end{enumerate}
+
+\noindent
+Finalmente, el notebook ejecuta esta función para las cinco iteraciones de validación cruzada existentes y para cada una de las variantes del dataset, generando así todos los modelos necesarios para la fase de evaluación.
+
+% ----------------------------------------------------------------------
+\section{Evaluación de los modelos base (eval.ipynb)}
+% ----------------------------------------------------------------------
+
+El archivo \texttt{eval.ipynb} se encarga de evaluar cada modelo individual entrenado previamente.
+
+\subsection{Carga de modelos y datos de test}
+
+Para cada fold y cada dataset, se carga el archivo \texttt{test} correspondiente:
+
+\begin{center}
+\texttt{test\{fold\}\{suffix\}.csv}
+\end{center}
+
+\noindent
+A continuación, se carga el modelo asociado mediante \texttt{joblib.load}, lo que permite evaluar cada combinación de forma independiente.
+
+\subsection{Generación de predicciones y probabilidades}
+
+Cada clasificador predice:
+
+\begin{itemize}
+    \item La clase esperada mediante \texttt{predict}.
+    \item Las probabilidades por clase mediante \texttt{predict\_proba}, cuando el modelo lo permite.
+\end{itemize}
+
+\noindent
+En caso de que un modelo no implemente \texttt{predict\_proba}, se genera una matriz de probabilidad manual construida a partir de la clase predicha.
+
+\subsection{Cálculo de métricas mediante un enfoque One-vs-All}
+
+El notebook implementa el cálculo manual de:
+
+\begin{itemize}
+    \item Matriz de confusión
+    \item TP, FP, FN y TN por clase
+    \item Sensibilidad, Especificidad, FPR y FNR
+    \item Accuracy, Precision, Recall y F1-Score
+    \item AUC multiclase mediante \texttt{roc\_auc\_score}
+\end{itemize}
+
+Para cada combinación evaluada se generan valores globales promediando las métricas de cada clase.
+
+\subsection{Almacenamiento de resultados y predicciones}
+
+Se guardan dos tipos de archivos:
+
+\begin{itemize}
+    \item Predicciones individuales en la carpeta \texttt{Predicciones/}.
+    \item Métricas globales añadidas al fichero: \texttt{Resultados/all\_metrics\_raw.csv}
+\end{itemize}
+
+Este fichero es utilizado posteriormente para generar resultados agregados y ensembles.
+
+% ----------------------------------------------------------------------
+\section{Métodos Ensemble y análisis final (results.ipynb)}
+% ----------------------------------------------------------------------
+
+El archivo \texttt{results.ipynb} constituye la fase final del proyecto, donde se combinan los resultados individuales de los clasificadores y se generan análisis comparativos.
+
+\subsection{Carga de resultados base}
+
+Se inicia cargando los datos de \texttt{all\_metrics\_raw.csv}, así como todas las predicciones individuales almacenadas en la carpeta \texttt{Predicciones/}.
+
+\subsection{Construcción de métodos Ensemble}
+
+Se implementan tres métodos de combinación:
+
+\begin{itemize}
+    \item \textbf{Votación mayoritaria}: selecciona la clase más votada entre los modelos base.
+    \item \textbf{Media}: media de las probabilidades por clase.
+    \item \textbf{Mediana}: mediana de las probabilidades, reduciendo la influencia de valores extremos.
+\end{itemize}
+
+\noindent
+Cada uno de estos métodos combina los resultados de las cuatro métricas anteriormente mencionadas.
+
+\subsection{Cálculo de métricas para los Ensemble}
+
+Se reutiliza la función de métricas definida en \texttt{eval.ipynb}, permitiendo comparar directamente los modelos base con los modelos Ensemble.
+
+\subsection{Cálculo de estadísticas agregadas}
+
+Los resultados se agrupan por \texttt{(Método, Dataset)} y se calcula la media y la desviación típica de cada métrica, exportándose todo a ficheros CSV para su análisis posterior.
+
+\subsection{Generación de gráficas de análisis}
+
+Finalmente, se generan distintas visualizaciones que permiten interpretar mejor las diferencias entre los modelos. A continuación se muestran las tres principales:
+
+\begin{center}
+FPR vs FNR:
+\end{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/FNR_vs_FPR.png}
+    \caption{Relación entre FPR y FNR para los distintos clasificadores y datasets.}
+    \label{fig:fnr_fpr}
+\end{figure}
+
+\begin{center}
+Precisión vs Recall:
+\end{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/PrecisionVSRecall.png}
+    \caption{Relación entre Precisión y Recall para los clasificadores evaluados.}
+    \label{fig:prec_recall}
+\end{figure}
+
+\begin{center}
+Accuracy vs F1-Score:
+\end{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/AccuracyvsF1.png}
+    \caption{Comparativa entre Accuracy y F1-Score.}
+    \label{fig:acc_f1}
+\end{figure}
+
+
+Estas figuras se guardan en la carpeta \texttt{Figuras/} y se encuentran listas para añadirse al informe.
+
+% ----------------------------------------------------------------------
+\section{Resultados y análisis}
+% ----------------------------------------------------------------------
+
+En general, los distintos clasificadores obtienen valores muy altos en todas las métricas. SVM y Random Forest son los métodos que muestran un comportamiento más sólido y estable, manteniendo Accuracy y F1-Score muy próximas al valor óptimo. K-NN también funciona bien, aunque su rendimiento se resiente ligeramente cuando la reducción de dimensionalidad es más agresiva. Naive Bayes es el modelo que más varía entre datasets, especialmente en las versiones con PCA al 80\%, donde se aprecia una pequeña pérdida de calidad.
+
+\noindent
+El preprocesado influye de forma clara: trabajar con los datos normalizados o estandarizados tiende a ofrecer resultados más constantes y con tasas de error muy bajas. La reducción mediante PCA funciona bien cuando se conserva el 95\% de la varianza, pero al reducir al 80\% sí se pierde algo de información útil para algunos modelos. Por último, los métodos Ensemble ayudan a suavizar estas diferencias y proporcionan predicciones más regulares, aportando pequeñas mejoras cuando algún clasificador individual muestra más variabilidad. En conjunto, el rendimiento global es excelente en prácticamente todos los casos.
+
+% ----------------------------------------------------------------------
+\section{Conclusiones}
+% ----------------------------------------------------------------------
+
+A lo largo de esta práctica hemos comparado diferentes clasificadores supervisados y estudiado la mejora que supone combinarlos mediante métodos Ensemble. El uso de los pliegues generados en la práctica anterior ha permitido evaluar los modelos de manera más estable y realista.
+
+\noindent
+Los métodos Ensemble han demostrado ser una herramienta eficaz para aumentar la robustez y mejorar el rendimiento global de los clasificadores, especialmente en métricas como el F1-Score.
+
+% ----------------------------------------------------------------------
+\section{Uso de inteligencia artificial}
+% ----------------------------------------------------------------------
+
+Nos hemos apoyado en esta herramienta para aclarar conceptos teóricos,así como para la ayuda y corrección de errores y repaso del código.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.30\textwidth]{images/uma_logo.jpg}
+\caption{Logo de la Universidad de Málaga}
+\end{figure}
+
+\end{document}
