@@ -43,8 +43,15 @@ Thumbs.db
 #--- ENTREGAS ---
 PR1.zip
 PR2.zip
+<<<<<<< HEAD
 PR3Entrega.zip
 PR3Entrega/
+=======
+PR3.zip
+PR3Entrega.zip
+PR3Entrega/
+EntregaPR4.zip
+>>>>>>> PR4
 
 
 #ENREOS QUE QUERÁIS TENER CADA UNO:
@@ -52,5 +59,10 @@ venvYEsoMoya.md
 Resultados/
 Predicciones/
 Modelos/
+<<<<<<< HEAD
 *.mp4
 *.webm
+=======
+*.webm
+4 aprendizaje profundo.pdf
+>>>>>>> PR4
